@@ -22,8 +22,8 @@ $this->params['breadcrumbs'][] = $this->title;
         var locations = <?php echo $mapa; ?>;
         // The location of Uluru
         const uluru = {
-            lat: -33.45694,
-            lng: -70.64827
+            lat: parseFloat(locations[0][1]),
+            lng: parseFloat(locations[0][2])
         };
         // The map, centered at Uluru
         const map = new google.maps.Map(document.getElementById("map"), {
@@ -33,10 +33,10 @@ $this->params['breadcrumbs'][] = $this->title;
         });
 
         // The marker, positioned at Uluru
-        const marker = new google.maps.Marker({
-            position: uluru,
-            map: map,
-        });
+        // const marker = new google.maps.Marker({
+        //     position: uluru,
+        //     map: map,
+        // });
         var infowindow = new google.maps.InfoWindow;
 
         var markers, i;
@@ -85,44 +85,57 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="row">
 
 
-        <div class="col s12">
+        <div class="col-md-12">
 
+            <div class="panel">
+                <div class="panel-heading">
+                    <h4>Listado de Locales</h4>
+                </div>
+                <div class="panel-body">
+                    <?php echo $this->render('_search', ['model' => $searchModel]); ?>
 
-            <div id="map"></div>
-
+                    <div id="map"></div>
+                </div>
+            </div>
 
 
         </div>
 
 
     </div>
+
     <div class="row">
-        <div class="col s12">
+        <div class="col-md-12">
+            <div class="panel">
+                <div class="panel-heading">
+                    <h4>Listado de Colaboradores</h4>
+                </div>
+                <div class="panel-body">
+                    <?= GridView::widget([
+                        'dataProvider' => $dataProvider,
+                        'filterModel' => $searchModel,
+                        'columns' => [
+                            ['class' => 'yii\grid\SerialColumn'],
+                            'name:ntext',
+                            'text_address:ntext',
+                            //'latitude:ntext',
+                            //'longitude:ntext',
+                            'phone:ntext',
+                            'commune:ntext',
+                            'region:ntext',
+                            [
+                                'label' => 'Acciones',
+                                'format' => 'raw',
+                                'value' => function ($model) {
+                                    return Html::a('Ver', ['/locales/view', 'id' => $model->id], ['class' => 'btn btn-primary']);
+                                }
+                            ]
 
-            <?= GridView::widget([
-                'dataProvider' => $dataProvider,
-                'filterModel' => $searchModel,
-                'columns' => [
-                    ['class' => 'yii\grid\SerialColumn'],
-                    'name:ntext',
-                    'text_address:ntext',
-                    //'latitude:ntext',
-                    //'longitude:ntext',
-                    'phone:ntext',
-                    'commune:ntext',
-                    'region:ntext',
-                    [
-                        'label' => 'Acciones',
-                        'format' => 'raw',
-                        'value' => function ($model) {
-                            return Html::a('Ver', ['/locales/view', 'id' => $model->id], ['class' => 'btn btn-primary']);
-                        }
-                    ]
 
-
-                ],
-            ]); ?>
-
+                        ],
+                    ]); ?>
+                </div>
+            </div>
 
 
         </div>

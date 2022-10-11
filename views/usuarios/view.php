@@ -13,27 +13,30 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="usuarios-view">
 
-    
+    <div class="panel">
+        <div class="panel-heading">
+            <h5><?= Html::encode($this->title) ?></h5> <?= Html::a('Actualizar datos usuario', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
 
-    <p>
-    <h5><?= Html::encode($this->title) ?></h5>  <?= Html::a('Actualizar datos usuario', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-       
-    </p>
+        </div>
+        <div class="panel-body">
 
-    <?= DetailView::widget([
-        'model' => $model,
-        'attributes' => [
-            'id',
-            'cliente',
-            'direccion',
-            'comuna',
-            'region',
-            'telefono',
-            'correo',
-            'local.name'
-            // 'lat',
-            // 'lng',
-        ],
-    ]) ?>
 
+
+            <?= DetailView::widget([
+                'model' => $model,
+                'attributes' => [
+                    'id',
+                    'cliente',
+                    'direccion',
+                    'comuna',
+                    'region',
+                    'telefono',
+                    'correo',
+                    'local.name'
+                    // 'lat',
+                    // 'lng',
+                ],
+            ]) ?>
+        </div>
+    </div>
 </div>

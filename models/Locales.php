@@ -47,12 +47,12 @@ class Locales extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'name' => 'Name',
-            'text_address' => 'Direccion',
+            'text_address' => 'Dirección',
             'latitude' => 'Latitude',
             'longitude' => 'Longitude',
             'phone' => 'Telefono',
             'commune' => 'Comuna',
-            'region' => 'Region',
+            'region' => 'Región',
         ];
     }
 }

@@ -20,13 +20,13 @@ class AppAsset extends AssetBundle
     public $basePath = '@webroot';
     public $baseUrl = '@web';
     public $css = [
-        'css/materialize.min.css',
+       // 'css/materialize.min.css',
     ];
     public $js = [
-        'js/materialize.js'
+       // 'js/materialize.js'
     ];
     public $depends = [
-        'yii\web\YiiAsset',
+        //'yii\web\YiiAsset',
         //'yii\bootstrap5\BootstrapAsset'
     ];
 }

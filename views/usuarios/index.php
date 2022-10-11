@@ -28,17 +28,17 @@ $this->params['breadcrumbs'][] = $this->title;
         });
         // The location of Uluru
         const uluru = {
-            lat: -33.45694,
-            lng: -70.64827
+            lat: parseFloat(locations[0][1]),
+            lng: parseFloat(locations[0][2])
         };
         // The map, centered at Uluru
         const map = new google.maps.Map(document.getElementById("map"), {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
-            zoom: 10,
+            zoom: 8,
             center: uluru,
         });
 
-      
+
         var infowindow = new google.maps.InfoWindow;
 
         var markers, i;
@@ -70,7 +70,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     })
                     .then((response) => {
                         directionsRenderer.setDirections(response);
-                        
+
                     })
                     .catch((e) => window.alert("Directions request failed due to " + status));
             });
@@ -80,7 +80,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
         });
         // for (i = 0; i < locations.length; i++) {
-            directionsRenderer.setMap(map);
+        directionsRenderer.setMap(map);
 
 
         // }
@@ -106,53 +106,201 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="row">
 
 
-        <div class="col s12">
+        <div class="col-md-12">
 
+            <div class="panel">
+                <div class="panel-heading">
+                    <h4>Colaboradores</h4>
+                </div>
+                <div class="panel-body">
+                <?php  echo $this->render('_search', ['model' => $searchModel]); ?>
 
-            <div id="map"></div>
+                    <div id="map"></div>
 
-
+                </div>
+            </div>
 
         </div>
 
 
     </div>
     <div class="row">
-        <div class="col s12">
+        <div class="panel">
+            <div class="panel-heading">
+                <h4>Indicadores</h4>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-sm-6 col-lg-8">
+                        <div class="row">
+                            <br>
+                            <div class="col-sm-6">
+
+                                <!--Tile-->
+                                <!--===================================================-->
+                                <div class="panel panel-primary panel-colorful">
+                                    <div class="pad-all text-center">
+                                        <span class="text-3x text-thin"><?php echo $totales; ?> min</span>
+                                        <p>Tiempo Promedio</p>
+                                        <i class="demo-pli-user icon-lg"></i>
+                                    </div>
+                                </div>
+                                <!--===================================================-->
+
+
+                                <!--Tile-->
+                                <!--===================================================-->
+                                <div class="panel panel-warning panel-colorful">
+                                    <div class="pad-all text-center">
+                                        <span class="text-3x text-thin"><?php echo $totalUsuarios; ?></span>
+                                        <p>Colaboradores</p>
+                                        <i class="demo-psi-user icon-lg"></i>
+                                    </div>
+                                </div>
+                                <!--===================================================-->
+
+                            </div>
+                            <div class="col-sm-6">
+
+                                <!--Tile-->
+                                <!--===================================================-->
+                                <div class="panel panel-purple panel-colorful">
+                                    <div class="pad-all text-center">
+                                        <span class="text-3x text-thin"><?php echo round($promediokm); ?> KM</span>
+                                        <p>Distancia Promedio</p>
+                                        <i class="demo-pli-user"></i>
+                                    </div>
+                                </div>
+                                <!--===================================================-->
+
+
+                                <!--Tile-->
+                                <!--===================================================-->
+                                <div class="panel panel-danger panel-colorful">
+                                    <div class="pad-all text-center">
+                                        <span class="text-3x text-thin"><?php echo $rango3; ?></span>
+                                        <p>Fuera de Rango</p>
+                                        <i class="demo-psi-user icon-lg"></i>
+                                    </div>
+                                </div>
+                                <!--===================================================-->
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <!--Tile-->
+                                <!--===================================================-->
+                                <div class="panel media pad-all bg-success">
+                                    <div class="media-left">
+                                        <span class="icon-wra icon-wap-sm bg-ifo">
+                                            <i class="demo-pli-check icon-3x"></i>
+                                        </span>
+                                    </div>
+                                    <div class="media-body">
+                                        <p class="text-2x mar-no text-semibold"><?php echo $rango1; ?></p>
+                                        <p class="mar-no">Rango Optimo</p>
+                                    </div>
+                                </div>
+                                <!--===================================================-->
+                                <!--Tile-->
+                                <!--===================================================-->
+                                <div class="panel media pad-all bg-warning">
+                                    <div class="media-left">
+                                        <span class="icon-wra icon-wap-sm bg-warning">
+                                            <i class="demo-pli-like icon-3x"></i>
+                                        </span>
+                                    </div>
+                                    <div class="media-body">
+                                        <p class="text-2x mar-no text-semibold"><?php echo $rango2; ?></p>
+                                        <p class="mar-no">Rango aceptable</p>
+                                    </div>
+                                </div>
+                                <!--===================================================-->
+
+
+                                <!--Tile-->
+                                <!--===================================================-->
+                                <div class="panel media pad-all bg-danger">
+                                    <div class="media-left">
+                                        <span class="icon-wra icon-wap-sm bg-danger">
+                                            <i class="demo-pli-close icon-3x"></i>
+                                        </span>
+                                    </div>
+                                    <div class="media-body">
+                                        <p class="text-2x mar-no text-semibold"><?php echo $rango3; ?></p>
+                                        <p class="mar-no">Fuera de Rango</p>
+                                    </div>
+                                </div>
+                                <!--===================================================-->
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
 
 
 
 
 
-            <?php
+            <div class="panel">
+                <div class="panel-heading">
+                    <h4>Listado de Colaboradores</h4>
+                </div>
+                <div class="panel-body">
 
+                    <?= GridView::widget([
+                        'dataProvider' => $dataProvider,
+                        'filterModel' => $searchModel,
+                        'columns' => [
+                            ['class' => 'yii\grid\SerialColumn'],
 
-            // echo $this->render('_search', ['model' => $searchModel]); 
-            ?>
+                            'cliente',
+                            'direccion',
+                            'comuna',
+                            'region',
+                            [
+                                'label' => 'KM',
+                                'attribute' => 'km',
+                                // 'value' => 'km'
+                                'value' => function ($model) {
+                                    $total = ($model->km) / 1000;
+                                    return round($total);
+                                }
+                            ],
+                            [
+                                'label' => 'Tiempo',
+                                'value' => function ($model) {
 
-            <?= GridView::widget([
-                'dataProvider' => $dataProvider,
-                'filterModel' => $searchModel,
-                'columns' => [
-                    ['class' => 'yii\grid\SerialColumn'],
+                                    $horas = floor($model->tiempo / 3600);
+                                    $minutos = floor(($model->tiempo - ($horas * 3600)) / 60);
+                                    $segundos = $model->tiempo - ($horas * 3600) - ($minutos * 60);
 
-                    'cliente',
-                    'direccion',
-                    'comuna',
-                    'region',
-                    'km',
-                    'tiempo',
-                    [
-                        'attribute' => 'idLocal',
-                        'value' => 'local.name'
-                    ],
-                    //'correo',
-                    //'lat',
-                    //'lng',
+                                    return $totales =  $horas . ':' . $minutos . ":" . round($segundos, 2);
+                                }
+                            ],
+                            [
+                                'attribute' => 'idLocal',
+                                'value' => 'local.name'
+                            ],
+                            //'correo',
+                            //'lat',
+                            //'lng',
 
-                ],
-            ]); ?>
-
+                        ],
+                    ]); ?>
+                </div>
+            </div>
 
 
         </div>
@@ -164,7 +312,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <style>
     #map {
-        height: calc((120vh - 110px) - 30vh);
+        height: calc((120vh - 110px) - 50vh);
         /* The height is 400 pixels */
         width: 100%;
         /* The width is the width of the web page */

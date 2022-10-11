@@ -8,6 +8,7 @@ use app\models\UsuariosSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use app\controllers\SiteController;
 
 /**
  * UsuariosController implements the CRUD actions for Usuarios model.
@@ -19,6 +20,7 @@ class UsuariosController extends Controller
      */
     public function behaviors()
     {
+        SiteController::valid();
         return array_merge(
             parent::behaviors(),
             [
@@ -121,9 +123,119 @@ class UsuariosController extends Controller
         $searchModel = new UsuariosSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
         $dataProvider->pagination = ['pageSize' => 30];
+
+        if (count($_GET) != 0) {
+            if (isset($_GET["UsuariosSearch"]["region"])) {
+                $region = $_GET["UsuariosSearch"]["region"];
+                // var_dump($_GET["UsuariosSearch"]["region"] );die();
+                $rango1 = Usuarios::find()->where(['between', 'km', 0, 10000])->andWhere(['like', 'region', $region])->count('*');
+                $rango2 = Usuarios::find()->where(['between', 'km', 10001, 20000])->andWhere(['like', 'region', $region])->count('*');
+                $rango3 = Usuarios::find()->where(['between', 'km', 20001, 9999999])->andWhere(['like', 'region', $region])->count('*');
+                $sumaTiempo = Usuarios::find()->where(['like', 'region', $region])->sum('tiempo');
+                $sumaKM = Usuarios::find()->where(['like', 'region', $region])->sum('km');
+
+                $total = Usuarios::find()->where(['like', 'region', $region])->count('*');
+                $promedioHora = $sumaTiempo / $total;
+
+                $horas = floor($promedioHora / 3600);
+                $minutos = floor(($promedioHora - ($horas * 3600)) / 60);
+                $segundos = $promedioHora - ($horas * 3600) - ($minutos * 60);
+
+                $totales =  $horas . ':' . $minutos . ":" . round($segundos);
+                $totalkm = ($sumaKM) / 1000;
+
+                $promediokm = $totalkm / $total;
+            } else {
+                if (isset($_GET["UsuariosSearch"]["comuna"])) {
+                    $comuna = $_GET["UsuariosSearch"]["comuna"];
+
+                    $rango1 = Usuarios::find()->where(['between', 'km', 0, 10000])->andWhere(['like', 'comuna', $comuna])->count('*');
+                    $rango2 = Usuarios::find()->where(['between', 'km', 10001, 20000])->andWhere(['like', 'comuna', $comuna])->count('*');
+                    $rango3 = Usuarios::find()->where(['between', 'km', 20001, 9999999])->andWhere(['like', 'comuna', $comuna])->count('*');
+                    $sumaTiempo = Usuarios::find()->where(['like', 'comuna', $comuna])->sum('tiempo');
+                    $sumaKM = Usuarios::find()->where(['like', 'comuna', $comuna])->sum('km');
+
+                    $total = Usuarios::find()->where(['like', 'comuna', $comuna])->count('*');
+                    $promedioHora = $sumaTiempo / $total;
+
+                    $horas = floor($promedioHora / 3600);
+                    $minutos = floor(($promedioHora - ($horas * 3600)) / 60);
+                    $segundos = $promedioHora - ($horas * 3600) - ($minutos * 60);
+
+                    $totales =  $horas . ':' . $minutos . ":" . round($segundos);
+                    $totalkm = ($sumaKM) / 1000;
+
+                    $promediokm = $totalkm / $total;
+                } else {
+                    if (isset($_GET["UsuariosSearch"]["cliente"])) {
+                        $cliente = $_GET["UsuariosSearch"]["cliente"];
+
+                        $rango1 = Usuarios::find()->where(['between', 'km', 0, 10000])->andWhere(['like', 'cliente', $cliente])->count('*');
+                        $rango2 = Usuarios::find()->where(['between', 'km', 10001, 20000])->andWhere(['like', 'cliente', $cliente])->count('*');
+                        $rango3 = Usuarios::find()->where(['between', 'km', 20001, 9999999])->andWhere(['like', 'cliente', $cliente])->count('*');
+                        $sumaTiempo = Usuarios::find()->where(['like', 'cliente', $cliente])->sum('tiempo');
+                        $sumaKM = Usuarios::find()->where(['like', 'cliente', $cliente])->sum('km');
+
+                        $total = Usuarios::find()->where(['like', 'cliente', $cliente])->count('*');
+                        $promedioHora = $sumaTiempo / $total;
+
+                        $horas = floor($promedioHora / 3600);
+                        $minutos = floor(($promedioHora - ($horas * 3600)) / 60);
+                        $segundos = $promedioHora - ($horas * 3600) - ($minutos * 60);
+
+                        $totales =  $horas . ':' . $minutos . ":" . round($segundos);
+                        $totalkm = ($sumaKM) / 1000;
+
+                        $promediokm = $totalkm / $total;
+                    } else {
+                        $rango1 = Usuarios::find()->where(['between', 'km', 0, 10000])->count('*');
+                        $rango2 = Usuarios::find()->where(['between', 'km', 10001, 20000])->count('*');
+                        $rango3 = Usuarios::find()->where(['between', 'km', 20001, 9999999])->count('*');
+                        $sumaTiempo = Usuarios::find()->sum('tiempo');
+                        $sumaKM = Usuarios::find()->sum('km');
+
+                        $total = Usuarios::find()->count('*');
+                        $promedioHora = $sumaTiempo / $total;
+
+                        $horas = floor($promedioHora / 3600);
+                        $minutos = floor(($promedioHora - ($horas * 3600)) / 60);
+                        $segundos = $promedioHora - ($horas * 3600) - ($minutos * 60);
+
+                        $totales =  $horas . ':' . $minutos . ":" . round($segundos);
+                        $totalkm = ($sumaKM) / 1000;
+
+                        $promediokm = $totalkm / $total;
+                    }
+                }
+            }
+        } else {
+            $rango1 = Usuarios::find()->where(['between', 'km', 0, 10000])->count('*');
+                        $rango2 = Usuarios::find()->where(['between', 'km', 10001, 20000])->count('*');
+                        $rango3 = Usuarios::find()->where(['between', 'km', 20001, 9999999])->count('*');
+                        $sumaTiempo = Usuarios::find()->sum('tiempo');
+                        $sumaKM = Usuarios::find()->sum('km');
+
+                        $total = Usuarios::find()->count('*');
+                        $promedioHora = $sumaTiempo / $total;
+
+                        $horas = floor($promedioHora / 3600);
+                        $minutos = floor(($promedioHora - ($horas * 3600)) / 60);
+                        $segundos = $promedioHora - ($horas * 3600) - ($minutos * 60);
+
+                        $totales =  $horas . ':' . $minutos . ":" . round($segundos);
+                        $totalkm = ($sumaKM) / 1000;
+
+                        $promediokm = $totalkm / $total;
+        }
+
+
+        $total = Usuarios::find()->count('*');
+        $countLocales = Locales::find()->count('*');
         $locales = Locales::find()->asArray()->all();
+
         $arr = [];
         foreach ($dataProvider->models as $m) {
+
 
             $obj = [$m["cliente"], $m["lat"], $m["lng"], [
                 $m["cliente"], $m["direccion"], $m["region"], $m["comuna"], $m["telefono"], $m["correo"],
@@ -138,7 +250,15 @@ class UsuariosController extends Controller
             'dataProvider' => $dataProvider,
             'pagina' => $dataProvider->pagination,
             'mapa' => json_encode($arr),
-            'locales' => json_encode($locales)
+            'locales' => json_encode($locales),
+            'rango1' => $rango1,
+            'rango2' => $rango2,
+            'rango3' => $rango3,
+            'totales' => $totales,
+            'promediokm' => $promediokm,
+
+            'totalUsuarios' => $dataProvider->getTotalCount()
+
         ]);
     }
 

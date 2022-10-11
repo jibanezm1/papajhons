@@ -9,6 +9,11 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+use app\models\Locales;
+use app\models\LocalesSearch;
+use app\models\UsersSystems;
+use app\models\Usuarios;
+use app\models\UsuariosSearch;
 
 class SiteController extends Controller
 {
@@ -17,6 +22,7 @@ class SiteController extends Controller
      */
     public function behaviors()
     {
+
         return [
             'access' => [
                 'class' => AccessControl::class,
@@ -61,7 +67,18 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $this->valid();
+        $searchModel = new LocalesSearch();
+        $dataProvider = $searchModel->search($this->request->queryParams);
+        $arr = [];
+        foreach ($dataProvider->models as $m) {
+            $obj = [$m["name"], $m["latitude"], $m["longitude"]];
+
+            array_push($arr, $obj);
+        }
+        return $this->render('index', [
+            'mapa' => json_encode($arr)
+        ]);
     }
 
     /**
@@ -71,16 +88,26 @@ class SiteController extends Controller
      */
     public function actionLogin()
     {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
+        $model = new UsersSystems();
 
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
+        if ($model->load(Yii::$app->request->post())) {
+            $valid = UsersSystems::find()->where(["correoUsuario" => $model->correoUsuario])->andWhere(["claveUsuario" => $model->claveUsuario])->one();
+            if ($valid) {
+                $session = Yii::$app->session;
+                $session->set('usuario', $valid);
+                $session->open();
+                return Yii::$app->response->redirect(['site/about']);
+
+            } else {
+                $this->layout = "login";
+                $model->claveUsuario = '';
+                return $this->render('login', [
+                    'model' => $model,
+                ]);
+            }
         }
         $this->layout = "login";
-        $model->password = '';
+        $model->claveUsuario = '';
         return $this->render('login', [
             'model' => $model,
         ]);
@@ -96,6 +123,25 @@ class SiteController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
+    }
+
+    public static function actionInvalid()
+    {
+        $session = Yii::$app->session;
+        $session->destroy();
+
+        Yii::$app->getResponse()->redirect('../site/login');
+    }
+
+    public static function valid()
+    {
+        $session = Yii::$app->session;
+        $session->open();
+        $user_id = $session->get('usuario');
+
+        if (!$user_id) {
+            return  Yii::$app->getResponse()->redirect('../site/login');
+        }
     }
 
     /**
@@ -123,6 +169,57 @@ class SiteController extends Controller
      */
     public function actionAbout()
     {
-        return $this->render('about');
+        $this->valid();
+
+        $rango1 = Usuarios::find()->where(['between', 'km', 0, 10000 ])->count('*');
+        $rango2 = Usuarios::find()->where(['between', 'km', 10001, 20000 ])->count('*');
+        $rango3 = Usuarios::find()->where(['between', 'km', 20001, 9999999 ])->count('*');
+
+        
+
+        $sumaTiempo = Usuarios::find()->sum('tiempo');
+        $sumaKM = Usuarios::find()->sum('km');
+        $top = Usuarios::find()->orderBy(['km' => SORT_DESC])->limit(3)->all();
+
+        $total = Usuarios::find()->count('*');
+        $locales = Locales::find()->count('*');
+
+        $promedioHora = $sumaTiempo / $total;
+
+        $horas = floor($promedioHora / 3600);
+        $minutos = floor(($promedioHora - ($horas * 3600)) / 60);
+        $segundos = $promedioHora - ($horas * 3600) - ($minutos * 60);
+
+        $totales =  $horas . ':' . $minutos . ":" . round($segundos);
+        $totalkm = ($sumaKM) / 1000;
+
+        $promediokm = $totalkm / $total;
+
+        $searchModel = new UsuariosSearch();
+        $dataProvider = $searchModel->search($this->request->queryParams);
+
+
+        $arr = [];
+        foreach ($dataProvider->models as $m) {
+
+
+            $obj = [$m["cliente"], $m["lat"], $m["lng"], [
+                $m["cliente"], $m["direccion"], $m["region"], $m["comuna"], $m["telefono"], $m["correo"],
+                $m->local->name, $m->local->text_address, $m->local->commune, $m["id"]
+            ]];
+            array_push($arr, $obj);
+        }
+        return $this->render('about',[
+            'tiempo' => $totales,
+            'distancia' => $promediokm,
+            'rango1' => $rango1,
+            'rango2' => $rango2,
+            'rango3' => $rango3,
+            'usuarios' => $total,
+            'locales' => $locales,
+            'mapa' => json_encode($arr),
+
+
+        ]);
     }
 }

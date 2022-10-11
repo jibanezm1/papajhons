@@ -55,7 +55,7 @@ class Usuarios extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'cliente' => 'Cliente',
+            'cliente' => 'Colaborador',
             'direccion' => 'Direccion',
             'comuna' => 'Comuna',
             'region' => 'Region',

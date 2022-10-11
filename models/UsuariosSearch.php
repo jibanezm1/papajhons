@@ -44,7 +44,7 @@ class UsuariosSearch extends Usuarios
 
         // add conditions that should always apply here
         $query->joinWith('local');
-        $query->orderBy(["km" => SORT_DESC]);
+        // $query->orderBy(["km" => SORT_DESC]);
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
@@ -64,8 +64,8 @@ class UsuariosSearch extends Usuarios
 
         $query->andFilterWhere(['like', 'cliente', $this->cliente])
             ->andFilterWhere(['like', 'direccion', $this->direccion])
-            ->andFilterWhere(['like', 'comuna', $this->comuna])
-            ->andFilterWhere(['like', 'region', $this->region])
+            ->andFilterWhere(['like', 'usuarios.comuna', $this->comuna])
+            ->andFilterWhere(['like', 'usuarios.region', $this->region])
             ->andFilterWhere(['like', 'telefono', $this->telefono])
             ->andFilterWhere(['like', 'correo', $this->correo])
             ->andFilterWhere(['like', 'lat', $this->lat])

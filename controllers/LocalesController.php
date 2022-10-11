@@ -6,10 +6,13 @@ use app\models\Locales;
 use app\models\LocalesSearch;
 use app\models\Usuarios;
 use app\models\UsuariosSearch;
-use Codeception\Coverage\Subscriber\Local;
+use ErrorException;
+use Exception;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use app\controllers\SiteController;
+use Yii;
 
 /**
  * LocalesController implements the CRUD actions for Locales model.
@@ -21,6 +24,8 @@ class LocalesController extends Controller
      */
     public function behaviors()
     {
+        SiteController::valid();
+
         return array_merge(
             parent::behaviors(),
             [
@@ -154,13 +159,57 @@ class LocalesController extends Controller
         // $top = Usuarios::find()->where(["idLocal" => $id])->orderBy(['km' => SORT_DESC])->limit(3)->asArray()->all();
         $searchModel = new UsuariosSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
-        $dataProvider->query->where(["idLocal" => $id]);
-        $dataProvider->pagination = ['pageSize' => 7, ];
-        
+        $dataProvider->query->where(["idLocal" => $id])->orderBy(["km" => SORT_DESC]);
+        $dataProvider->pagination = ['pageSize' => 7,];
 
         return $this->renderAjax('top', [
             'dataProvider' => $dataProvider,
         ]);
+    }
+
+    public function actionTodos()
+    {
+        $local = Locales::find()->all();
+        $arr = [];
+        foreach ($local as $l) {
+            try {
+                $usuarios = Usuarios::find()->where(["idLocal" => $l->id])->all();
+
+                $sumaTiempo = Usuarios::find()->where(["idLocal" => $l->id])->sum('tiempo');
+                $sumaKM = Usuarios::find()->where(["idLocal" => $l->id])->sum('km');
+                $top = Usuarios::find()->where(["idLocal" => $l->id])->orderBy(['km' => SORT_DESC])->limit(3)->asArray()->all();
+                $total = Usuarios::find()->where(["idLocal" => $l->id])->count('*');
+                $promedioHora = $sumaTiempo / $total;
+
+                $horas = floor($promedioHora / 3600);
+                $minutos = floor(($promedioHora - ($horas * 3600)) / 60);
+                $segundos = $promedioHora - ($horas * 3600) - ($minutos * 60);
+
+                $totales =  $horas . ':' . $minutos . ":" . round($segundos);
+                $totalkm = ($sumaKM) / 1000;
+
+                $promediokm = $totalkm / $total;
+
+
+                array_push($local, $totales);
+                array_push($local, round($promediokm, 1));
+                array_push($local, $top);
+
+                array_push($arr, $local);
+                foreach ($usuarios as $m) {
+                    $obj = [$m["cliente"], $m["lat"], $m["lng"], $m["direccion"] . ", " . $m["comuna"] . ", " . $m["region"], [
+                        $m["cliente"], $m["direccion"], $m["region"], $m["comuna"], $m["telefono"], $m["correo"], $m["id"], $m["tiempo"], $m["km"]
+                    ]];
+                    array_push($arr, $obj);
+                }
+            } catch (ErrorException $e) {
+                Yii::warning("Division by zero.");
+            }
+        }
+
+
+
+        return json_encode($arr);
     }
 
     public function actionData($id)
@@ -168,10 +217,10 @@ class LocalesController extends Controller
         $local = Locales::find()->where(["id" => $id])->asArray()->one();
 
         $usuarios = Usuarios::find()->where(["idLocal" => $id])->all();
+        $top = Usuarios::find()->where(["idLocal" => $id])->orderBy(['km' => SORT_DESC])->limit(3)->asArray()->all();
 
         $sumaTiempo = Usuarios::find()->where(["idLocal" => $id])->sum('tiempo');
         $sumaKM = Usuarios::find()->where(["idLocal" => $id])->sum('km');
-        $top = Usuarios::find()->where(["idLocal" => $id])->orderBy(['km' => SORT_DESC])->limit(3)->asArray()->all();
 
         $total = Usuarios::find()->where(["idLocal" => $id])->count('*');
         $promedioHora = $sumaTiempo / $total;
@@ -184,16 +233,29 @@ class LocalesController extends Controller
         $totalkm = ($sumaKM) / 1000;
 
         $promediokm = $totalkm / $total;
-
+        $rango1 = Usuarios::find()->where(['between', 'km', 0, 10000 ])->andWhere(['idLocal' => $id])->count('*');
+        $rango2 = Usuarios::find()->where(['between', 'km', 10001, 20000 ])->andWhere(['idLocal' => $id])->count('*');
+        $rango3 = Usuarios::find()->where(['between', 'km', 20001, 9999999 ])->andWhere(['idLocal' => $id])->count('*');
+    
+        $total = Usuarios::find()->where(["idLocal" => $id])->count('*');
+        $locales = Locales::find()->where(["id" => $id])->count('*');
 
         array_push($local, $totales);
         array_push($local, round($promediokm, 1));
         array_push($local, $top);
+
+        array_push($local, $rango1);
+        array_push($local, $rango2);
+        array_push($local, $rango3);
+        array_push($local, $total);
+        array_push($local, $locales);
+
         $arr = [];
         array_push($arr, $local);
+        $dats = $local['name'].", ".$local['text_address'];
         foreach ($usuarios as $m) {
             $obj = [$m["cliente"], $m["lat"], $m["lng"], $m["direccion"] . ", " . $m["comuna"] . ", " . $m["region"], [
-                $m["cliente"], $m["direccion"], $m["region"], $m["comuna"], $m["telefono"], $m["correo"], $m["id"], $m["tiempo"], $m["km"]
+                $m["cliente"], $m["direccion"], $m["region"], $m["comuna"], $m["telefono"], $m["correo"], $m["id"], $m["tiempo"], $m["km"],$dats
             ]];
             array_push($arr, $obj);
         }
@@ -201,7 +263,134 @@ class LocalesController extends Controller
         return json_encode($arr);
     }
 
+    public function actionImporta()
+    {
+        $modelImport = new \yii\base\DynamicModel(['fileImport' => 'Archivo con Nomina']);
+        $modelImport->addRule(['fileImport'], 'required');
+        $modelImport->addRule(['fileImport'], 'file', ['extensions' => 'ods,xls,xlsx'], ['maxSize' => 1024 * 1024]);
+        return $this->render('import', [
+            'modelImport' => $modelImport,
+        ]);
+    }
+    public function actionSubir()
+    {
+        ini_set('max_execution_time', '300'); //300 seconds = 5 minutes
 
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+
+        $modelImport = new \yii\base\DynamicModel([
+            'fileImport' => 'Archivo con Nomina',
+        ]);
+        $modelImport->addRule(['fileImport'], 'required');
+        $modelImport->addRule(['fileImport'], 'file', ['extensions' => 'ods,xls,xlsx'], ['maxSize' => 1024 * 1024]);
+
+        if (Yii::$app->request->post()) {
+
+
+
+
+            $modelImport->fileImport = \yii\web\UploadedFile::getInstance($modelImport, 'fileImport');
+
+
+            $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+            $reader->setReadDataOnly(true);
+
+            $spreadsheet = $reader->load($modelImport->fileImport->tempName);
+            $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+
+
+
+            $baseRow = 2;
+
+            $contador = 0;
+            while (!empty($sheetData[$baseRow]['A'])) {
+                // var_dump($sheetData[$baseRow]);die();
+                $usuario = new Usuarios();
+                try {
+                    $usuario->cliente = (string) $sheetData[$baseRow]['B'];
+                    $usuario->correo = "N/A";
+                    $usuario->telefono = "N/A";
+                    $usuario->direccion = (string) $sheetData[$baseRow]['C'];
+                    $usuario->region = (string) $sheetData[$baseRow]['F'] . ", " . $sheetData[$baseRow]['D'];
+                    $usuario->comuna = (string) $sheetData[$baseRow]['E'];
+                    $usuario->idLocal = Yii::$app->request->post()["state_10"];
+
+                    $address = $usuario->direccion . " " . $usuario->comuna . " " . $usuario->region . " Chile";
+                    $url = "https://maps.google.com/maps/api/geocode/json?address=" . urlencode($address) . "&key=AIzaSyAQbmLRDXnmodAxAj-KiDRbbZPHT8oil_E";
+
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                    $responseJson = curl_exec($ch);
+                    curl_close($ch);
+
+                    $response = json_decode($responseJson, true);
+
+                    $usuario->lat = $response["results"][0]["geometry"]["location"]["lat"];
+                    $usuario->lng = $response["results"][0]["geometry"]["location"]["lng"];
+                    $usuario->km = 0;
+                    $usuario->tiempo = 0;
+
+                    $usuario->sugeridoTiempo = 0;
+
+                    $usuario->sugeridoKm = 0;
+                } catch (ErrorException $e) {
+                    Yii::warning("Error en la definicion de los pedidos, revise la configuracion de la columna correo como texto en el excel.");
+                }
+
+
+                $usuario->save(false);
+
+
+                $contador++;
+
+                $baseRow++;
+            }
+            $this->actionDistancia(Yii::$app->request->post()["state_10"]);
+        }
+        return $this->redirect(['locales/view', 'id' => Yii::$app->request->post()["state_10"]]);
+    }
+
+    public function actionDistancia($id)
+    {
+
+        $l = Locales::find()->where(['id' => $id])->one();
+        $usuarios = Usuarios::find()->where(["idLocal" => $l->id])->all();
+
+        foreach ($usuarios as $u) {
+            $curl = curl_init();
+
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'https://maps.googleapis.com/maps/api/directions/json?origin=' . urlencode($u->direccion . ", " . $u->comuna . ", " . $u->region) . '&destination=' . urlencode($l->text_address . ", " . $l->commune . ", " . $l->region) . '&travelMode=TRANSIT&key=AIzaSyAQbmLRDXnmodAxAj-KiDRbbZPHT8oil_E',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => array(
+                    'Accept: application/json'
+                ),
+            ));
+
+
+            $response = curl_exec($curl);
+
+            $data = json_decode($response);
+
+            $user = Usuarios::find()->where(["id" => $u->id])->one();
+            if (isset($data->routes[0]->legs[0]->distance->value)) {
+                $user->km = $data->routes[0]->legs[0]->distance->value;
+                $user->tiempo = $data->routes[0]->legs[0]->duration->value;
+                $user->save(false);
+            }
+
+            curl_close($curl);
+        }
+    }
 
 
     /**
